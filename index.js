@@ -23,7 +23,7 @@ app.post('/rides', function(request, response) {
 	
 	var params = false;
 
-	if (username != undefined && lat != undefined && lng != undefined && created_at != undefined) {
+	if (username != undefined && lat != undefined && lng != undefined) {
 		params = true;
 	}
 
@@ -32,7 +32,6 @@ app.post('/rides', function(request, response) {
 			"username": username,
 			"lat": lat,
 			"lng": lng,
-			"created_at": created_at
 		};
 
 		db.collection('checkins', function(error, collection) {
