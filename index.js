@@ -3,81 +3,56 @@ var app = express();
 var bodyParser = require('body-parser');
 var url = require('url');
 
-// See https://stackoverflow.com/questions/5710358/how-to-get-post-query-in-express-node-js
 app.use(bodyParser.json());
-// See https://stackoverflow.com/questions/25471856/express-throws-error-as-body-parser-deprecated-undefined-extended
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Mongo initialization and connect to database
-// process.env.MONGOLAB_URI is the environment variable on Heroku for the MongoLab add-on
-// process.env.MONGOHQ_URL is the environment variable on Heroku for the MongoHQ add-on
-// If environment variables not found, fall back to mongodb://localhost/nodemongoexample
-// nodemongoexample is the name of the database
 var mongoUri = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost:27017/test';
 var MongoClient = require('mongodb').MongoClient, format = require('util').format;
 var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
 	db = databaseConnection;
 });
-//the above is credited to Ming; thank you!
 
-//these are the usernames allowed to login to the system
-var validLogins = ['mchow', 'kaytea', 'CindyLytle', 'BenHarris', 'JeremyMaletic', 'LeeMiller', 'EricDapper', 'RichRumfelt', 'VanAmmerman', 'VicJohnson', 'ErinHolleman', 'PatFitzgerald', 'CheriVasquez', 'HarleyRhoden', 'JanetGage', 'HarleyConnell', 'GlendaMaletic', 'JeffSoulen', 'MarkHair', 'RichardDrake', 'CalvinStruthers', 'LeslieDapper', 'JefflynGage', 'PaulRamsey', 'BobPicky', 'RonConnelly', 'FrancieCarmody', 'ColleenSayers', 'TomDapper', 'MatthewKerr', 'RichBiggerstaff', 'MarkHarris', 'JerryRumfelt', 'JoshWright', 'LindyContreras', 'CameronGregory', 'MarkStruthers', 'TravisJohnson', 'RobertHeller', 'CalvinMoseley', 'HawkVasquez', 'LayneDapper', 'HarleyIsdale', 'GaylaSoulen', 'MatthewRichards', 'RoyDuke', 'GaylaRodriquez', 'FrancieGeraghty', 'LisaLytle', 'ErinHair', 'CalvinGraham', 'VanRhoden', 'KeithRumfelt', 'GlendaSmith', 'KathrynJohnson', 'FredVandeVorde', 'SheriMcKelvey', 'RoyMiller', 'PatIsdale', 'JoseRodriquez', 'KelleyRumfelt', 'JanetKinsey', 'RonCampbell', 'BenKerr', 'RobDennison', 'BobOwens', 'CherylLytle', 'LisaSoulen', 'TravisDuke', 'CindyGregory', 'JoyceVandeVorde', 'MatthewScholl', 'RobJohnson', 'EricHawthorn', 'CameronRodriquez', 'JoshRamsey', 'CalvinDuke', 'SheriHeller', 'LeaAmmerman', 'LayneVasquez', 'IMConnell', 'BenHauenstein', 'ColleenKerr', 'HawkRichards', 'LeaIsdale', 'RickSoulen', 'RoyMcFatter', 'KyleContreras', 'MaryHeller', 'KathrynFitzgerald', 'JanetRiedel', 'PatHawthorn', 'KeithHauenstein', 'BenRichards', 'RickVasquez', 'KelleyAmmerman', 'EvanConnelly', 'KendallRumfelt', 'TravisIsdale', 'RobContreras', 'JavierRussell', 'ColleenCampbell', 'JeremyConnelly', 'BenKinsey', 'JanetScholl', 'PaulaLewis', 'LeslieMcFatter', 'MatthewMcAda', 'LeeMuilman', 'KyleMoseley', 'JeffRhoden', 'AnitaHolleman', 'JefflynMcKelvey', 'BobContreras', 'RobFitzgerald', 'BenJohnson'];
-
-app.post('/sendLocation', function(request, response) {
-	//CORS enabling stuff
+app.post('/rides', function(request, response) {
 	response.header("Access-Control-Allow-Origin", "*");
 	response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 
-	//parse the POST data
-	var login = request.body.login;
+	var username = request.body.username;
 	var lat = request.body.lat;
 	var lng = request.body.lng;
-	var message = request.body.message;
-
-	//timestamp the JSON object and initially assume that it doesn't meet parameters
-	var date = new Date();
+	var created_at = request.body.created_at;
+	
 	var params = false;
 
-	//traverse the valid login list to check if the provided login is valid
-	var arrWithLogin = validLogins.filter(function(x) {
-		return x == login;
-	});
-
-	//check if JSON object meets parameters and value types
-	if (arrWithLogin == login && lat != undefined && lng != undefined && message != undefined) {
+	if (username != undefined && lat != undefined && lng != undefined && created_at != undefined) {
 		params = true;
 	}
 
-	//if JSON object passed parameter test
 	if (params) {
-		//create the JSON object to insert into the database
 		var toInsert = {
-			"login": login,
+			"username": username,
 			"lat": lat,
 			"lng": lng,
-			"message": message,
-			"created_at": date
+			"created_at": created_at
 		};
 
-		//call the collection and insert it
 		db.collection('checkins', function(error, collection) {
 			var id = collection.insert(toInsert, function(error, saved) {
 				if (error) {
 					response.send(500);
 				}
 				else {	
-					//send the requester back EVERYTHING in the database
-					//TODO (not for assignment 3): send back only the most RECENT checkin for EACH valid user
 					collection.find().toArray(function(error, cursor) {
 						response.send(cursor);
 					});	
 				}
 			});
 		});
-	} else {
+	} 
+	else {
 		response.send({"error":"Whoops, something is wrong with your data!"});
 	}
 });
+
 
 app.get('/latest.json', function(request, response) {
 	//CORS enabling stuff
