@@ -13,8 +13,8 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
 });
 
 app.post('/rides', function(request, response) {
-	response.header("Access-Control-Allow-Origin", "*");
-	response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	response.header('Access-Control-Allow-Origin', '*');
+	response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
 
 	var username = request.body.username;
 	var lat = request.body.lat;
@@ -34,7 +34,7 @@ app.post('/rides', function(request, response) {
 			"lng": lng,
 		};
 
-		db.collection('checkins', function(error, collection) {
+		db.collection('requests', function(error, collection) {
 			var id = collection.insert(toInsert, function(error, saved) {
 				if (error) {
 					response.send(500);
